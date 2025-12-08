@@ -1,0 +1,75 @@
+{
+	"pages": [
+		{
+			"path": "pages/situation/index",
+			"style": {
+				"navigationBarTitleText": "汛情态势"
+			}
+		},
+		{
+			"path": "pages/plan/index",
+			"style": {
+				"navigationBarTitleText": "预案"
+			}
+		},
+		{
+			"path": "pages/science/index",
+			"style": {
+				"navigationBarTitleText": "防汛科普"
+			}
+		},
+		{
+			"path": "pages/todo/index",
+			"style": {
+				"navigationBarTitleText": "代办"
+			}
+		},
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "首页",
+				"navigationStyle": "custom"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8"
+	},
+	"uniIdRouter": {
+		"loginPage": "pages/situation/index"
+	},
+	"tabBar": {
+		"color": "#999999",
+		"selectedColor": "#1296db",
+		"backgroundColor": "#FFFFFF",
+		"borderStyle": "black",
+		"list": [
+			{
+				"pagePath": "pages/situation/index",
+				"text": "汛情态势",
+				"iconPath": "static/icon/situation.png",
+				"selectedIconPath": "static/icon/situation-active.png"
+			},
+			{
+				"pagePath": "pages/plan/index",
+				"text": "预案",
+				"iconPath": "static/icon/plan.png",
+				"selectedIconPath": "static/icon/plan-active.png"
+			},
+			{
+				"pagePath": "pages/science/index",
+				"text": "防汛科普",
+				"iconPath": "static/icon/science.png",
+				"selectedIconPath": "static/icon/science-active.png"
+			},
+			{
+				"pagePath": "pages/todo/index",
+				"text": "代办",
+				"iconPath": "static/icon/todo.png",
+				"selectedIconPath": "static/icon/todo-active.png"
+			}
+		]
+	}
+}

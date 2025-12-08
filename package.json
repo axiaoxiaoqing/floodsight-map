@@ -1,0 +1,29 @@
+{
+  "name": "uni-maplibre",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev:mp-weixin": "npx vue-cli-service uni-serve --mode development --platform mp-weixin",
+    "build:mp-weixin": "npx vue-cli-service uni-build --mode production --platform mp-weixin",
+    "dev:h5": "npx vue-cli-service uni-serve --mode development --platform h5",
+    "build:h5": "npx vue-cli-service uni-build --mode production --platform h5"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/runtime": "^7.28.4",
+    "@dcloudio/uni-app": "2.0.2-4080420251103001",
+    "@dcloudio/uni-cli-i18n": "^2.0.2-4080420251103001",
+    "@dcloudio/uni-cli-shared": "^2.0.2-4080420251103001",
+    "@dcloudio/webpack-uni-pages-loader": "^2.0.2-4080420251103001",
+    "maplibre-gl": "^5.12.0",
+    "vue": "^3.5.24"
+  },
+  "devDependencies": {
+    "@dcloudio/uni-mp-weixin": "2.0.2-4080420251103001",
+    "@dcloudio/vue-cli-plugin-uni": "2.0.2-4080420251103001",
+    "@vue/cli-service": "^5.0.9"
+  }
+}
