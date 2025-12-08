@@ -344,7 +344,7 @@ function onUnmounted() {
 /* 地图容器样式 */
 .water-map {
   width: 100%;
-  height: 1000rpx;
+  height: 500rpx;
   border-radius: 8rpx;
   overflow: hidden;
   background-color: #f0f0f0;

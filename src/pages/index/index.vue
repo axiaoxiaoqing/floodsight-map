@@ -176,7 +176,7 @@
 
 	.map-container {
 		width: 100%;
-		height: 2400rpx;
+		height: 3600rpx;
 		margin-bottom: 30rpx;
 		border-radius: 16rpx;
 		overflow: hidden;

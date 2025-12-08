@@ -1,22 +1,3 @@
-# Dependencies
-node_modules/
-pnpm-lock.yaml
-
-# Build output
-unpackage/
-dist/
-
-# Editor directories and files
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-
-# OS files
-.DS_Store
-Thumbs.db
-
 # Logs
 logs
 *.log
@@ -26,27 +7,34 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Environment variables
-.env.local
-.env.*.local
+node_modules
+dist
+dist-ssr
+*.local
 
-# Temporary files
-*.tmp
-*.temp
-.cache/
-
-# IDE generated files
-*.iml
-*.ipr
-*.iws
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/gradle.xml
-.idea/assetWizardSettings.xml
-.idea/dictionaries
-.idea/libraries
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Uni-app
+unpackage/
+*.wxss
+*.swan
+*.json
+*.wxml
+*.axml
+*.ttml
+*.qml
+*.nvue
+
+# Environment variables
+.env
+.env.local
+.env.*.local
