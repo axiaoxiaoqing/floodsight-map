@@ -21,7 +21,7 @@
 		{
 			"path": "pages/todo/index",
 			"style": {
-				"navigationBarTitleText": "代办"
+				"navigationBarTitleText": "我的待办"
 			}
 		},
 		{
@@ -66,7 +66,7 @@
 			},
 			{
 				"pagePath": "pages/todo/index",
-				"text": "代办",
+				"text": "我的待办",
 				"iconPath": "static/icon/todo.png",
 				"selectedIconPath": "static/icon/todo-active.png"
 			}

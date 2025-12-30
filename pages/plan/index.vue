@@ -1,125 +1,148 @@
 <template>
   <view class="container">
     <view class="header">
-      <text class="title">防汛预案管理</text>
+      <view class="header-left" @click="showLocationTip">
+        <image 
+          src="/static/situ-icon/定位.svg" 
+          class="location-icon"
+          mode="aspectFit"
+        />
+        <text class="location-name">北庄村</text>
+      </view>
+      <view class="header-right">
+        <view class="custom-picker" @click="toggleDropdown">
+          <view class="picker-text">{{ currentViewMode }}</view>
+          <view class="dropdown-arrow" :class="{ 'arrow-up': isDropdownOpen }"></view>
+        </view>
+        <view v-if="isDropdownOpen" class="dropdown-menu">
+          <view 
+            v-for="(mode, index) in viewModes" 
+            :key="index"
+            class="dropdown-item" 
+            @click="selectViewMode(index)"
+          >
+            {{ mode }}
+          </view>
+        </view>
+      </view>
     </view>
     <view class="content">
-      <view class="plan-tabs">
-        <view class="tab-item" :class="{ active: activeTab === 'level' }" @click="activeTab = 'level'">
-          <text>按等级</text>
+      <view class="situation-card">
+        <view class="button-grid">
+          <view 
+            v-for="(button, index) in monitoringButtons" 
+            :key="index"
+            class="monitoring-button"
+            :class="{ 'active': currentButton === index }"
+            @click="selectButton(index)"
+          >
+            <!-- 显示SVG图标或emoji -->
+            <image 
+              v-if="isSvgIcon(button.icon)" 
+              :src="button.icon" 
+              class="button-icon-svg"
+              mode="aspectFit"
+            />
+            <text v-else class="button-icon-emoji">{{ button.icon }}</text>
+            
+            <text class="button-text">{{ button.text }}</text>
+          </view>
         </view>
-        <view class="tab-item" :class="{ active: activeTab === 'type' }" @click="activeTab = 'type'">
-          <text>按类型</text>
-        </view>
+      
       </view>
       
-      <view class="plan-list" v-if="activeTab === 'level'">
-        <view class="plan-card" v-for="plan in levelPlans" :key="plan.id" @click="viewPlan(plan)">
-          <view class="plan-header">
-            <text class="plan-title">{{ plan.title }}</text>
-            <view class="level-tag" :class="plan.levelClass">
-              <text>{{ plan.level }}</text>
-            </view>
-          </view>
-          <view class="plan-info">
-            <text class="plan-time">发布时间：{{ plan.publishTime }}</text>
-            <text class="plan-dept">发布部门：{{ plan.department }}</text>
-          </view>
-          <text class="plan-desc">{{ plan.description }}</text>
-        </view>
-      </view>
-      
-      <view class="plan-list" v-else-if="activeTab === 'type'">
-        <view class="plan-card" v-for="plan in typePlans" :key="plan.id" @click="viewPlan(plan)">
-          <view class="plan-header">
-            <text class="plan-title">{{ plan.title }}</text>
-            <view class="type-tag">
-              <text>{{ plan.type }}</text>
-            </view>
-          </view>
-          <view class="plan-info">
-            <text class="plan-time">发布时间：{{ plan.publishTime }}</text>
-            <text class="plan-dept">发布部门：{{ plan.department }}</text>
-          </view>
-          <text class="plan-desc">{{ plan.description }}</text>
-        </view>
+
+    
+      <view class="details-container">
+        <!-- 监测详情组件 - 与选择框联动 -->
+        <DetailsSection 
+          :current-button="currentButton"
+          :button-contents="buttonContents"
+          :monitoring-buttons="monitoringButtons"
+        />
       </view>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
+
+// 导入监测详情子组件
+import DetailsSection from '../situation/DetailsSection.vue'
+import UniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
 
 // 响应式数据
-const activeTab = ref('level')
+const updateTime = ref('')
 
-// 按等级分类的预案数据
-const levelPlans = ref([
-  {
-    id: '1',
-    title: '暴雨红色预警应急预案',
-    level: '一级',
-    levelClass: 'level-1',
-    publishTime: '2024-06-01',
-    department: '应急管理局',
-    description: '针对特大暴雨天气的综合应急处置方案，包括人员疏散、物资调配等措施。'
+// 监测按钮数据
+const monitoringButtons = ref([
+  { 
+    text: '桥梁', 
+    icon: '/static/plan-icon/桥梁.svg',
+    title: '桥梁监测',
+    description: '桥梁结构安全监测，包括桥墩、桥面位移、应力监测等'
   },
-  {
-    id: '2',
-    title: '洪水蓝色预警响应预案',
-    level: '四级',
-    levelClass: 'level-4',
-    publishTime: '2024-05-20',
-    department: '水利局',
-    description: '针对可能发生的一般洪水情况，明确监测、预警和初步处置流程。'
+  { 
+    text: '重点关注点', 
+    icon: '/static/plan-icon/重点关注点.svg',
+    title: '重点关注点',
+    description: '重点关注区域监测，包括关键设施、地质隐患点等'
   },
-  {
-    id: '3',
-    title: '台风黄色预警防御预案',
-    level: '三级',
-    levelClass: 'level-3',
-    publishTime: '2024-05-10',
-    department: '气象局',
-    description: '应对台风天气的防御措施，重点关注沿海地区和低洼地带。'
+  { 
+    text: '隐患点', 
+    icon: '/static/plan-icon/隐患点.svg',
+    title: '隐患点排查',
+    description: '安全隐患排查与监测，及时发现和预警潜在风险'
   }
 ])
 
-// 按类型分类的预案数据
-const typePlans = ref([
-  {
-    id: '4',
-    title: '城市内涝应急处置方案',
-    type: '城市',
-    publishTime: '2024-05-25',
-    department: '住建局',
-    description: '解决城市地区暴雨积水问题的应急处理流程和责任分工。'
-  },
-  {
-    id: '5',
-    title: '水库防汛调度预案',
-    type: '水利',
-    publishTime: '2024-04-30',
-    department: '水利局',
-    description: '规范水库水位调度和泄洪操作，确保水库安全运行。'
-  },
-  {
-    id: '6',
-    title: '山区地质灾害防范预案',
-    type: '地质',
-    publishTime: '2024-04-15',
-    department: '自然资源局',
-    description: '预防和应对山区可能发生的滑坡、泥石流等地质灾害的措施。'
-  }
+const currentButton = ref(0)
+
+// 监测按钮详细内容数据
+const buttonContents = ref([
+ 
 ])
 
-// 查看预案详情
-const viewPlan = (plan) => {
+// 视图模式数据
+const viewModes = ref(['图文模式', '地图模式', '关怀模式'])
+const currentViewMode = ref('地图模式')
+const isDropdownOpen = ref(false)
+
+// 视图模式切换处理函数
+function toggleDropdown() {
+  isDropdownOpen.value = !isDropdownOpen.value
+}
+
+function selectViewMode(index) {
+  currentViewMode.value = viewModes.value[index]
+  isDropdownOpen.value = false
+}
+
+// 显示位置提示
+function showLocationTip() {
   uni.showToast({
-    title: '查看预案: ' + plan.title,
-    icon: 'none'
+    title: '暂不支持更换',
+    icon: 'none',
+    duration: 2000
   })
 }
+
+// 选择监测按钮
+function selectButton(index) {
+  currentButton.value = index
+}
+
+// 判断是否为SVG图标
+function isSvgIcon(iconPath) {
+  return typeof iconPath === 'string' && iconPath.endsWith('.svg')
+}
+
+// 初始化数据
+onMounted(() => {
+  updateTime.value = new Date().toLocaleString('zh-CN')
+})
+
 </script>
 
 <style scoped>
@@ -131,135 +154,344 @@ const viewPlan = (plan) => {
 }
 
 .header {
-  padding: 20rpx;
-  background-color: #007AFF;
+  padding-top: 20rpx;
+  padding-left: 20rpx;
+  padding-right: 20rpx;
   color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-left {
+  flex: 2;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 8rpx;
+  padding: 20rpx;
+  margin-right: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 25rpx;
+}
+
+.location-icon {
+  width: 30rpx;
+  height: 30rpx;
+  margin-right: 12rpx;
+}
+
+.location-name {
+  color: #000000;
   text-align: center;
 }
 
-.title {
-  font-size: 36rpx;
-  font-weight: bold;
+.header-right {
+  flex: 1;
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 8rpx;
+  padding: 20rpx;
+  color: #333;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  height: 25rpx;
+  display: flex;
+  align-items: center;
+}
+
+.custom-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  cursor: pointer;
+}
+
+.picker-text {
+  font-size: 28rpx;
+  color: #333;
+  flex: 1;
+}
+
+.dropdown-arrow {
+  width: 0;
+  height: 0;
+  border-left: 10rpx solid transparent;
+  border-right: 10rpx solid transparent;
+  border-top: 10rpx solid #666;
+  transition: transform 0.3s;
+  margin-left: 10rpx;
+}
+
+.arrow-up {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border-radius: 8rpx;
+  margin-top: 8rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.dropdown-item {
+  padding: 16rpx 20rpx;
+  font-size: 28rpx;
+  color: #333;
+  border-bottom: 1rpx solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f5f5;
 }
 
 .content {
-  flex: 1;
   padding: 20rpx;
+  flex: 1;
 }
 
-.plan-tabs {
-  display: flex;
+.situation-card {
   background-color: white;
   border-radius: 12rpx;
+  padding: 24rpx;
   margin-bottom: 20rpx;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
 }
 
-.tab-item {
-  flex: 1;
-  padding: 24rpx 0;
-  text-align: center;
-  font-size: 32rpx;
-  color: #666;
-  position: relative;
-}
-
-.tab-item.active {
-  color: #007AFF;
-  font-weight: bold;
-}
-
-.tab-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 20%;
-  width: 60%;
-  height: 4rpx;
-  background-color: #007AFF;
-}
-
-.plan-list {
+.card-header {
   display: flex;
-  flex-direction: column;
-  gap: 20rpx;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
 }
 
-.plan-card {
+.card-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.update-time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.water-level {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.level-value {
+  font-size: 64rpx;
+  font-weight: bold;
+  color: #007AFF;
+}
+
+.level-status {
+  font-size: 32rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+}
+
+.level-status.normal {
+  background-color: #e8f5e9;
+  color: #4caf50;
+}
+
+.level-status.warning {
+  background-color: #fff8e1;
+  color: #ff9800;
+}
+
+.level-status.danger {
+  background-color: #ffebee;
+  color: #f44336;
+}
+
+.data-list {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.data-item {
+  flex: 1;
+  background-color: white;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin: 0 10rpx;
+  text-align: center;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+}
+
+.data-label {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 10rpx;
+}
+
+.data-value {
+  display: block;
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.data-value.rise {
+  color: #f44336;
+}
+
+.data-value.drop {
+  color: #4caf50;
+}
+
+.chart-section {
   background-color: white;
   border-radius: 12rpx;
   padding: 24rpx;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
-  transition: all 0.3s;
 }
 
-.plan-card:active {
-  background-color: #f8f8f8;
-  transform: scale(0.98);
-}
-
-.plan-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16rpx;
-}
-
-.plan-title {
-  font-size: 34rpx;
+.section-title {
+  font-size: 32rpx;
   font-weight: bold;
   color: #333;
-  flex: 1;
-  margin-right: 20rpx;
+  margin-bottom: 20rpx;
+  display: block;
 }
 
-.level-tag {
-  padding: 6rpx 16rpx;
-  border-radius: 16rpx;
-  font-size: 24rpx;
-  color: white;
-}
-
-.level-tag.level-1 {
-  background-color: #f44336;
-}
-
-.level-tag.level-2 {
-  background-color: #ff9800;
-}
-
-.level-tag.level-3 {
-  background-color: #ffeb3b;
-  color: #333;
-}
-
-.level-tag.level-4 {
-  background-color: #2196f3;
-}
-
-.type-tag {
-  padding: 6rpx 16rpx;
-  border-radius: 16rpx;
-  font-size: 24rpx;
-  background-color: #4caf50;
-  color: white;
-}
-
-.plan-info {
+.chart-placeholder {
+  width: 100%;
+  height: 300rpx;
+  background-color: #f5f5f5;
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 16rpx;
-  font-size: 26rpx;
+  align-items: center;
+  justify-content: center;
   color: #999;
+  font-size: 28rpx;
+  border-radius: 8rpx;
 }
 
-.plan-desc {
+/* 图表占位符样式 */
+.chart-placeholder {
+  height: 300rpx;
+  background: #f5f5f5;
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-text {
+  color: #999;
+  font-size: 24rpx;
+}
+
+/* 确保picker组件样式正确 */
+picker {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 监测按钮网格样式 */
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20rpx;
+  margin-bottom: 30rpx;
+}
+
+.monitoring-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 10rpx;
+  border-radius: 12rpx;
+  background-color: #f8f9fa;
+  border: 2rpx solid #e9ecef;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-height: 120rpx;
+}
+
+.monitoring-button.active {
+  background-color: #e3f2fd;
+  border-color: #007AFF;
+  box-shadow: 0 4rpx 16rpx rgba(0, 122, 255, 0.2);
+}
+
+.button-icon {
+  font-size: 40rpx;
+  margin-bottom: 8rpx;
+}
+
+.button-text {
+  font-size: 24rpx;
+  color: #333;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.monitoring-button.active .button-text {
+  color: #007AFF;
+  font-weight: 600;
+}
+
+/* 按钮内容显示样式 */
+.button-content {
+  background-color: white;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  margin-top: 20rpx;
+  border-left: 4rpx solid #007AFF;
+}
+
+.content-title {
   font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+/* SVG图标样式 */
+.button-icon-svg {
+  width: 40rpx;
+  height: 40rpx;
+  margin-bottom: 16rpx;
+}
+
+.button-icon-emoji {
+  font-size: 40rpx;
+  margin-bottom: 16rpx;
+  line-height: 1;
+}
+
+.content-description {
+  font-size: 24rpx;
   color: #666;
-  line-height: 44rpx;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  line-height: 1.5;
+  display: block;
+}
+
+/* 监测详情展示区域样式 */
+.details-section {
+  margin-bottom: 30rpx;
 }
 </style>

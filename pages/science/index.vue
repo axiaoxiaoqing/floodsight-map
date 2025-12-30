@@ -1,8 +1,6 @@
 <template>
   <view class="container">
-    <view class="header">
-      <text class="title">防汛科普知识</text>
-    </view>
+
     <view class="content">
       <view class="category-tabs">
         <view class="tab-item" v-for="category in categories" :key="category.id" 
@@ -110,13 +108,7 @@ const filteredKnowledge = computed(() => {
   return knowledgeData.value.filter(item => item.categoryId === activeCategory.value)
 })
 
-// 查看知识详情
-const viewKnowledge = (item) => {
-  uni.showToast({
-    title: '查看知识: ' + item.title,
-    icon: 'none'
-  })
-}
+
 </script>
 
 <style scoped>
@@ -127,17 +119,7 @@ const viewKnowledge = (item) => {
   background-color: #f5f5f5;
 }
 
-.header {
-  padding: 20rpx;
-  background-color: #007AFF;
-  color: white;
-  text-align: center;
-}
 
-.title {
-  font-size: 36rpx;
-  font-weight: bold;
-}
 
 .content {
   flex: 1;
@@ -145,8 +127,6 @@ const viewKnowledge = (item) => {
 
 .category-tabs {
   display: flex;
-  overflow-x: auto;
-  white-space: nowrap;
   background-color: white;
   padding: 0 20rpx;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
@@ -157,10 +137,14 @@ const viewKnowledge = (item) => {
 
 .tab-item {
   padding: 24rpx 32rpx;
-  font-size: 32rpx;
+  font-size: 28rpx;
   color: #666;
   position: relative;
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
 }
 
 .tab-item.active {

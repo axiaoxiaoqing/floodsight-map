@@ -1,8 +1,5 @@
 <template>
   <view class="container">
-    <view class="header">
-      <text class="title">防汛代办任务</text>
-    </view>
     <view class="content">
       <view class="task-tabs">
         <view class="tab-item" :class="{ active: activeTab === 'pending' }" @click="activeTab = 'pending'">

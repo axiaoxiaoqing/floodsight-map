@@ -1,52 +1,65 @@
 <template>
   <view class="container">
     <view class="header">
-      <text class="title">实时汛情态势</text>
+      <view class="header-left" @click="showLocationTip">
+        <image 
+          src="/static/situ-icon/定位.svg" 
+          class="location-icon"
+          mode="aspectFit"
+        />
+        <text class="location-name">北庄村</text>
+      </view>
+      <view class="header-right">
+        <view class="custom-picker" @click="toggleDropdown">
+          <view class="picker-text">{{ currentViewMode }}</view>
+          <view class="dropdown-arrow" :class="{ 'arrow-up': isDropdownOpen }"></view>
+        </view>
+        <view v-if="isDropdownOpen" class="dropdown-menu">
+          <view 
+            v-for="(mode, index) in viewModes" 
+            :key="index"
+            class="dropdown-item" 
+            @click="selectViewMode(index)"
+          >
+            {{ mode }}
+          </view>
+        </view>
+      </view>
     </view>
     <view class="content">
       <view class="situation-card">
-        <view class="card-header">
-          <text class="card-title">当前水位监测</text>
-          <text class="update-time">更新时间：{{ updateTime }}</text>
+        <view class="button-grid">
+          <view 
+            v-for="(button, index) in monitoringButtons" 
+            :key="index"
+            class="monitoring-button"
+            :class="{ 'active': currentButton === index }"
+            @click="selectButton(index)"
+          >
+            <!-- 显示SVG图标或emoji -->
+            <image 
+              v-if="isSvgIcon(button.icon)" 
+              :src="button.icon" 
+              class="button-icon-svg"
+              mode="aspectFit"
+            />
+            <text v-else class="button-icon-emoji">{{ button.icon }}</text>
+            
+            <text class="button-text">{{ button.text }}</text>
+          </view>
         </view>
-        <view class="water-level">
-          <text class="level-value">{{ waterLevel }} m</text>
-          <text class="level-status" :class="levelClass">{{ levelStatus }}</text>
-        </view>
+      
       </view>
-      <view class="data-list">
-        <view class="data-item">
-          <text class="data-label">预警站点</text>
-          <text class="data-value">{{ warningCount }}个</text>
-        </view>
-        <view class="data-item">
-          <text class="data-label">降雨量</text>
-          <text class="data-value">{{ rainfall }} mm</text>
-        </view>
-        <view class="data-item">
-          <text class="data-label">24小时变化</text>
-          <text class="data-value" :class="changeClass">{{ waterLevelChange }} m</text>
-        </view>
-      </view>
-      <view class="chart-section">
-        <text class="section-title">水位分布地图</text>
-        <!-- H5环境使用maplibre-gl -->
-        <!-- #ifdef H5 -->
-        <div id="waterMap" class="water-map"></div>
-        <!-- #endif -->
-        
-        <!-- 微信小程序环境使用原生地图组件 -->
-        <!-- #ifdef MP-WEIXIN -->
-        <map 
-          id="myWaterMap" 
-          class="water-map"
-          :latitude="mapLatitude"
-          :longitude="mapLongitude"
-          :scale="mapScale"
-          :markers="waterMarkers"
-          :show-location="true"
-        ></map>
-        <!-- #endif -->
+      
+
+    
+      <view class="details-container">
+        <!-- 监测详情组件 - 与选择框联动 -->
+        <DetailsSection 
+          :current-button="currentButton"
+          :button-contents="buttonContents"
+          :monitoring-buttons="monitoringButtons"
+        />
       </view>
     </view>
   </view>
@@ -55,141 +68,164 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 
-// #ifdef H5
-// H5环境导入maplibre-gl
-import maplibregl from 'maplibre-gl'
-import 'maplibre-gl/dist/maplibre-gl.css'
-// #endif
+// 导入监测详情子组件
+import DetailsSection from '../situation/DetailsSection.vue'
+import UniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
 
 // 响应式数据
 const updateTime = ref('')
-const waterLevel = ref('12.5')
-const levelStatus = ref('正常')
-const levelClass = ref('normal')
-const warningCount = ref('3')
-const rainfall = ref('45.2')
-const waterLevelChange = ref('+0.3')
-const changeClass = ref('rise')
 
-// 地图相关数据
-const waterMap = ref(null)
-const mapLatitude = ref(39.9042) // 默认北京坐标
-const mapLongitude = ref(116.4074)
-const mapScale = ref(10)
-const waterMarkers = ref([])
+// 监测按钮数据
+const monitoringButtons = ref([
+  { 
+    text: '降雨监测', 
+    icon: '/static/situ-icon/降雨监测.svg',
+    title: '降雨监测',
+    description: '实时监测降雨量数据，包括小时降雨量、日降雨量等信息'
+  },
+  { 
+    text: '沟道水情', 
+    icon: '/static/situ-icon/沟道.svg',
+    title: '沟道水情',
+    description: '沟道水位、流量监测数据'
+  },
+  { 
+    text: '河道水情', 
+    icon: '/static/situ-icon/河道水情.svg',
+    title: '河道水情',
+    description: '河道水位、流量、流速等综合监测'
+  },
+  { 
+    text: '水库水情', 
+    icon: '/static/situ-icon/水库水情 .svg',
+    title: '水库水情',
+    description: '水库水位、库容、入出库流量监测'
+  },
+  { 
+    text: '视频监控', 
+    icon: '/static/situ-icon/视频监控.svg',
+    title: '视频监控',
+    description: '重点区域视频监控画面'
+  },
+  { 
+    text: '安置点', 
+    icon: '/static/situ-icon/安置点.svg',
+    title: '安置点',
+    description: '应急安置点状态和人员信息'
+  }
+])
 
-// H5环境地图初始化
-function initWaterMap() {
-  // 确保容器已渲染
-  nextTick(() => {
-    try {
-      const config = window.$root?.$maplibreConfig || {
-        defaultStyle: 'https://demotiles.maplibre.org/style.json',
-        defaultCenter: [mapLongitude.value, mapLatitude.value],
-        defaultZoom: 10
-      }
+const currentButton = ref(0)
 
-      waterMap.value = new maplibregl.Map({
-        container: 'waterMap',
-        style: config.defaultStyle,
-        center: config.defaultCenter,
-        zoom: config.defaultZoom,
-        antialias: true
-      })
+// 监测按钮详细内容数据
+const buttonContents = ref([
+  {
+    title: '降雨监测详情',
+    description: '实时监测降雨量数据，包括小时降雨量、日降雨量等信息',
+    status: 'normal',
+    realTimeData: [
+      { label: '小时降雨量', value: '2.5', unit: 'mm', status: 'normal' },
+      { label: '日降雨量', value: '15.8', unit: 'mm', status: 'normal' },
+      { label: '累计降雨量', value: '156.2', unit: 'mm', status: 'normal' }
+    ],
+    hasChart: true,
+  },
+  {
+    title: '沟道水情详情',
+    description: '沟道水位、流量监测数据',
+    status: 'warning',
+    realTimeData: [
+      { label: '水位', value: '3.2', unit: 'm', status: 'warning' },
+      { label: '流量', value: '125.6', unit: 'm³/s', status: 'normal' },
+      { label: '流速', value: '1.8', unit: 'm/s', status: 'normal' }
+    ],
+    hasChart: true
+  },
+  {
+    title: '河道水情详情',
+    description: '河道水位、流量、流速等综合监测',
+    status: 'normal',
+    realTimeData: [
+      { label: '水位', value: '5.8', unit: 'm', status: 'normal' },
+      { label: '流量', value: '456.2', unit: 'm³/s', status: 'normal' },
+      { label: '流速', value: '2.1', unit: 'm/s', status: 'normal' }
+    ],
+    hasChart: true
+  },
+  {
+    title: '水库水情详情',
+    description: '水库水位、库容、入出库流量监测',
+    status: 'normal',
+    realTimeData: [
+      { label: '水位', value: '156.8', unit: 'm', status: 'normal' },
+      { label: '库容', value: '89.5', unit: '万m³', status: 'normal' },
+      { label: '入库流量', value: '85.2', unit: 'm³/s', status: 'normal' }
+    ],
+    hasChart: true
+  },
+  {
+    title: '视频监控详情',
+    description: '重点区域视频监控画面',
+    status: 'normal',
+    realTimeData: [
+      { label: '在线摄像头', value: '12', unit: '个', status: 'normal' },
+      { label: '离线摄像头', value: '1', unit: '个', status: 'warning' },
+      { label: '覆盖率', value: '92', unit: '%', status: 'normal' }
+    ],
+    hasChart: false
+  },
+  {
+    title: '安置点详情',
+    description: '应急安置点状态和人员信息',
+    status: 'danger',
+    realTimeData: [
+      { label: '启用安置点', value: '3', unit: '个', status: 'normal' },
+      { label: '安置人员', value: '156', unit: '人', status: 'warning' },
+      { label: '可用容量', value: '244', unit: '人', status: 'normal' }
+    ],
+    hasChart: false
+  }
+])
 
-      waterMap.value.addControl(new maplibregl.NavigationControl(), 'top-right')
-      waterMap.value.addControl(new maplibregl.ScaleControl(), 'bottom-left')
+// 视图模式数据
+const viewModes = ref(['图文模式', '地图模式', '关怀模式'])
+const currentViewMode = ref('地图模式')
+const isDropdownOpen = ref(false)
 
-      waterMap.value.on('load', () => {
-        console.log('水位分布地图加载完成')
-        // 添加水位监测点数据
-        addWaterLevelMarkers()
-      })
+// 视图模式切换处理函数
+function toggleDropdown() {
+  isDropdownOpen.value = !isDropdownOpen.value
+}
 
-    } catch (error) {
-      console.error('水位地图初始化失败:', error)
-    }
+function selectViewMode(index) {
+  currentViewMode.value = viewModes.value[index]
+  isDropdownOpen.value = false
+}
+
+// 显示位置提示
+function showLocationTip() {
+  uni.showToast({
+    title: '暂不支持更换',
+    icon: 'none',
+    duration: 2000
   })
 }
 
-// 添加水位监测点标记
-function addWaterLevelMarkers() {
-  // 模拟的水位监测点数据
-  const markers = [
-    { lng: 116.4074, lat: 39.9042, name: '监测点1', level: 12.5, status: 'normal' },
-    { lng: 116.4574, lat: 39.9142, name: '监测点2', level: 15.2, status: 'warning' },
-    { lng: 116.3574, lat: 39.8942, name: '监测点3', level: 18.7, status: 'danger' }
-  ]
+// 选择监测按钮
+function selectButton(index) {
+  currentButton.value = index
+}
 
-  // #ifdef H5
-  if (waterMap.value) {
-    markers.forEach(marker => {
-      const el = document.createElement('div')
-      el.className = 'custom-marker'
-      el.style.backgroundColor = marker.status === 'danger' ? '#f44336' : 
-                                marker.status === 'warning' ? '#ff9800' : '#4caf50'
-      el.style.width = '20px'
-      el.style.height = '20px'
-      el.style.borderRadius = '50%'
-      el.style.display = 'flex'
-      el.style.alignItems = 'center'
-      el.style.justifyContent = 'center'
-      el.style.color = 'white'
-      el.style.fontSize = '10px'
-      el.style.fontWeight = 'bold'
-      
-      new maplibregl.Marker(el)
-        .setLngLat([marker.lng, marker.lat])
-        .setPopup(new maplibregl.Popup().setHTML(`
-          <div>
-            <h3>${marker.name}</h3>
-            <p>水位: ${marker.level}m</p>
-            <p>状态: ${marker.status === 'danger' ? '危险' : 
-                   marker.status === 'warning' ? '预警' : '正常'}</p>
-          </div>
-        `))
-        .addTo(waterMap.value)
-    })
-  }
-  // #endif
-  
-  // #ifdef MP-WEIXIN
-  waterMarkers.value = markers.map(marker => ({
-    id: marker.name,
-    latitude: marker.lat,
-    longitude: marker.lng,
-    width: 30,
-    height: 30,
-    iconPath: marker.status === 'danger' ? '/static/icon/warning.png' : 
-              marker.status === 'warning' ? '/static/icon/warning.png' : '/static/icon/normal.png',
-    title: marker.name,
-    callout: {
-      content: `${marker.name}: ${marker.level}m`,
-      display: 'BYCLICK'
-    }
-  }))
-  // #endif
+// 判断是否为SVG图标
+function isSvgIcon(iconPath) {
+  return typeof iconPath === 'string' && iconPath.endsWith('.svg')
 }
 
 // 初始化数据
 onMounted(() => {
   updateTime.value = new Date().toLocaleString('zh-CN')
-  
-  // 条件编译初始化不同环境的地图
-  // #ifdef H5
-  initWaterMap()
-  // #endif
 })
 
-// 页面卸载时清理地图资源
-function onUnmounted() {
-  // #ifdef H5
-  if (waterMap.value) {
-    waterMap.value.remove()
-    waterMap.value = null
-  }
-  // #endif
-}
 </script>
 
 <style scoped>
@@ -201,15 +237,106 @@ function onUnmounted() {
 }
 
 .header {
-  padding: 20rpx;
-  background-color: #007AFF;
+  padding-top: 20rpx;
+  padding-left: 20rpx;
+  padding-right: 20rpx;
   color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-left {
+  flex: 2;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 8rpx;
+  padding: 20rpx;
+  margin-right: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 25rpx;
+}
+
+.location-icon {
+  width: 30rpx;
+  height: 30rpx;
+  margin-right: 12rpx;
+}
+
+.location-name {
+  color: #000000;
   text-align: center;
 }
 
-.title {
-  font-size: 36rpx;
-  font-weight: bold;
+.header-right {
+  flex: 1;
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 8rpx;
+  padding: 20rpx;
+  color: #333;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  height: 25rpx;
+  display: flex;
+  align-items: center;
+}
+
+.custom-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  cursor: pointer;
+}
+
+.picker-text {
+  font-size: 28rpx;
+  color: #333;
+  flex: 1;
+}
+
+.dropdown-arrow {
+  width: 0;
+  height: 0;
+  border-left: 10rpx solid transparent;
+  border-right: 10rpx solid transparent;
+  border-top: 10rpx solid #666;
+  transition: transform 0.3s;
+  margin-left: 10rpx;
+}
+
+.arrow-up {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border-radius: 8rpx;
+  margin-top: 8rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.dropdown-item {
+  padding: 16rpx 20rpx;
+  font-size: 28rpx;
+  color: #333;
+  border-bottom: 1rpx solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f5f5;
 }
 
 .content {
@@ -341,28 +468,113 @@ function onUnmounted() {
   border-radius: 8rpx;
 }
 
-/* 地图容器样式 */
-.water-map {
+/* 图表占位符样式 */
+.chart-placeholder {
+  height: 300rpx;
+  background: #f5f5f5;
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-text {
+  color: #999;
+  font-size: 24rpx;
+}
+
+/* 确保picker组件样式正确 */
+picker {
   width: 100%;
-  height: 500rpx;
-  border-radius: 8rpx;
-  overflow: hidden;
-  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* 为H5环境添加地图容器特定样式 */
-#waterMap {
-  position: relative;
+/* 监测按钮网格样式 */
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20rpx;
+  margin-bottom: 30rpx;
 }
 
-/* 自定义标记样式 */
-:deep(.custom-marker) {
+.monitoring-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 10rpx;
+  border-radius: 12rpx;
+  background-color: #f8f9fa;
+  border: 2rpx solid #e9ecef;
+  transition: all 0.3s ease;
   cursor: pointer;
-  transition: transform 0.2s;
+  min-height: 120rpx;
 }
 
-:deep(.custom-marker:hover) {
-  transform: scale(1.2);
-  z-index: 10;
+.monitoring-button.active {
+  background-color: #e3f2fd;
+  border-color: #007AFF;
+  box-shadow: 0 4rpx 16rpx rgba(0, 122, 255, 0.2);
+}
+
+.button-icon {
+  font-size: 40rpx;
+  margin-bottom: 8rpx;
+}
+
+.button-text {
+  font-size: 24rpx;
+  color: #333;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.monitoring-button.active .button-text {
+  color: #007AFF;
+  font-weight: 600;
+}
+
+/* 按钮内容显示样式 */
+.button-content {
+  background-color: white;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  margin-top: 20rpx;
+  border-left: 4rpx solid #007AFF;
+}
+
+.content-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+/* SVG图标样式 */
+.button-icon-svg {
+  width: 40rpx;
+  height: 40rpx;
+  margin-bottom: 16rpx;
+}
+
+.button-icon-emoji {
+  font-size: 40rpx;
+  margin-bottom: 16rpx;
+  line-height: 1;
+}
+
+.content-description {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.5;
+  display: block;
+}
+
+/* 监测详情展示区域样式 */
+.details-section {
+  margin-bottom: 30rpx;
 }
 </style>

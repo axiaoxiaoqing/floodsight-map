@@ -1,5 +1,16 @@
 {
   "dependencies": {
-    "@dcloudio/uni-ui": "^1.5.11"
+    "@dcloudio/uni-cli-shared": "^2.0.2-4080720251210002",
+    "@dcloudio/uni-mp-toutiao": "^2.0.2-4080720251210002",
+    "@dcloudio/uni-mp-weixin": "^2.0.2-4080720251210002",
+    "@dcloudio/uni-stat": "^2.0.2-4080720251210002",
+    "@dcloudio/uni-ui": "^1.5.11",
+    "@dcloudio/vite-plugin-uni": "^3.0.0-alpha-3000020210521001",
+    "maplibre-gl": "^5.14.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.3",
+    "vite": "^7.3.0",
+    "vue": "^3.5.26"
   }
 }
