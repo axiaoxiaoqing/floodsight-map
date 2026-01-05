@@ -12,49 +12,50 @@
       </view>
       
       <view class="task-list" v-if="activeTab === 'pending'">
-        <view class="task-card" v-for="task in pendingTasks" :key="task.id" @click="viewTask(task)">
-          <view class="task-header">
-            <view class="task-checkbox" @click.stop="toggleTask(task)">
-              <view class="checkbox" :class="{ checked: task.completed }"></view>
+        <view class="task-card" v-for="task in pendingTasks" :key="task.id" >
+          <view class="task-icon">📋</view>
+          <view class="task-content">
+            <view class="task-header">
+              <text class="task-title">{{ task.title }}</text>
+              <view class="priority-tag" :class="task.priorityClass">
+                <text>{{ task.priority }}</text>
+              </view>
             </view>
-            <text class="task-title">{{ task.title }}</text>
-            <view class="priority-tag" :class="task.priorityClass">
-              <text>{{ task.priority }}</text>
+            <view class="task-info">
+              <text class="task-deadline">请在 {{ task.deadline }} 之前完成</text>
             </view>
+            <text class="task-desc">{{ task.description }}</text>
           </view>
-          <view class="task-info">
-            <text class="task-deadline">截止时间：{{ task.deadline }}</text>
-            <text class="task-assignee">负责人：{{ task.assignee }}</text>
+          <view class="task-checkbox" @click.stop="toggleTask(task)">
+            <view class="checkbox" :class="{ checked: task.completed }"></view>
           </view>
-          <text class="task-desc">{{ task.description }}</text>
         </view>
         <view class="empty-tip" v-if="pendingTasks.length === 0">
-          <text>暂无待处理任务</text>
+          <text>🎯 暂无待处理任务</text>
         </view>
       </view>
       
       <view class="task-list" v-else-if="activeTab === 'completed'">
-        <view class="task-card completed" v-for="task in completedTasks" :key="task.id" @click="viewTask(task)">
-          <view class="task-header">
-            <view class="task-checkbox" @click.stop="toggleTask(task)">
-              <view class="checkbox" :class="{ checked: task.completed }"></view>
+        <view class="task-card completed" v-for="task in completedTasks" :key="task.id" >
+          <view class="task-icon completed">✅</view>
+          <view class="task-content">
+            <view class="task-header">
+              <text class="task-title">{{ task.title }}</text>
             </view>
-            <text class="task-title">{{ task.title }}</text>
+            <view class="task-info">
+              <text class="task-completed-time">🎉 {{ task.completedTime }}</text>
+            </view>
+            <text class="task-desc">{{ task.description }}</text>
           </view>
-          <view class="task-info">
-            <text class="task-deadline">截止时间：{{ task.deadline }}</text>
-            <text class="task-completed-time">完成时间：{{ task.completedTime }}</text>
+          <view class="task-checkbox" @click.stop="toggleTask(task)">
+            <view class="checkbox" :class="{ checked: task.completed }"></view>
           </view>
-          <text class="task-desc">{{ task.description }}</text>
         </view>
         <view class="empty-tip" v-if="completedTasks.length === 0">
-          <text>暂无已完成任务</text>
+          <text>🎉 暂无已完成任务</text>
         </view>
       </view>
       
-      <view class="add-task-btn" @click="addNewTask">
-        <text>+</text>
-      </view>
     </view>
   </view>
 </template>
@@ -139,31 +140,44 @@ const pendingCount = computed(() => {
   return pendingTasks.value.length
 })
 
-// 查看任务详情
-const viewTask = (task) => {
-  uni.showToast({
-    title: '查看任务: ' + task.title,
-    icon: 'none'
-  })
-}
 
 // 切换任务状态
 const toggleTask = (task) => {
-  task.completed = !task.completed
-  if (task.completed) {
-    task.completedTime = new Date().toLocaleString('zh-CN')
+  if (!task.completed) {
+    // 完成任务时显示确认框
+    uni.showModal({
+      title: '确认完成',
+      content: `确定要标记任务"${task.title}"为已完成吗？`,
+      confirmText: '确认完成',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          task.completed = true
+          const now = new Date()
+          const year = now.getFullYear()
+          const month = String(now.getMonth() + 1).padStart(2, '0')
+          const day = String(now.getDate()).padStart(2, '0')
+          const hour = String(now.getHours()).padStart(2, '0')
+          const minute = String(now.getMinutes()).padStart(2, '0')
+          task.completedTime = `${year}-${month}-${day} ${hour}:${minute}`
+          uni.showToast({
+            title: '任务已完成',
+            icon: 'success'
+          })
+        }
+      }
+    })
   } else {
+    // 取消完成时无需确认
+    task.completed = false
     task.completedTime = ''
+    uni.showToast({
+      title: '任务已恢复',
+      icon: 'none'
+    })
   }
 }
 
-// 添加新任务
-const addNewTask = () => {
-  uni.showToast({
-    title: '添加新任务',
-    icon: 'none'
-  })
-}
 </script>
 
 <style scoped>
@@ -195,48 +209,46 @@ const addNewTask = () => {
 .task-tabs {
   display: flex;
   background-color: white;
-  border-radius: 12rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+  border-radius: 16rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
+  padding: 8rpx;
+  border: 1rpx solid #f0f0f0;
 }
 
 .tab-item {
   flex: 1;
-  padding: 24rpx 0;
+  padding: 20rpx 0;
   text-align: center;
-  font-size: 32rpx;
-  color: #666;
+  font-size: 30rpx;
+  color: #8e8e93;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 12rpx;
+  transition: all 0.3s ease;
 }
 
 .tab-item.active {
-  color: #007AFF;
-  font-weight: bold;
-}
-
-.tab-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 20%;
-  width: 60%;
-  height: 4rpx;
-  background-color: #007AFF;
+  font-weight: 600;
+  background: rgb(66, 144, 240);
+  color: white;
+  box-shadow: 0 2rpx 8rpx rgba(0, 122, 255, 0.3);
 }
 
 .badge {
   position: absolute;
+  top: 8rpx;
   right: 25%;
-  background-color: #f44336;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
   color: white;
-  font-size: 24rpx;
-  padding: 2rpx 12rpx;
+  font-size: 22rpx;
+  padding: 4rpx 10rpx;
   border-radius: 12rpx;
-  min-width: 28rpx;
+  min-width: 24rpx;
   text-align: center;
+  font-weight: 600;
 }
 
 .task-list {
@@ -247,104 +259,151 @@ const addNewTask = () => {
 
 .task-card {
   background-color: white;
-  border-radius: 12rpx;
-  padding: 24rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
-  transition: all 0.3s;
+  border-radius: 20rpx;
+  padding: 32rpx;
+  box-shadow: 0 6rpx 25rpx rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 24rpx;
+  border: 1rpx solid #f5f5f5;
+  position: relative;
+  overflow: hidden;
 }
 
-.task-card.completed {
-  opacity: 0.7;
+.task-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8rpx;
+  background: linear-gradient(135deg, #007AFF, #0056b3);
+  border-radius: 0 4rpx 4rpx 0;
+}
+
+.task-card.completed::before {
+  background: linear-gradient(135deg, #34c759, #30d158);
 }
 
 .task-card:active {
-  background-color: #f8f8f8;
-  transform: scale(0.98);
+  background-color: #f8f9fa;
+  transform: scale(0.99);
+  box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.12);
+}
+
+.task-icon {
+  font-size: 42rpx;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 4rpx;
+}
+
+.task-icon.completed {
+  opacity: 0.8;
+}
+
+.task-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .task-header {
   display: flex;
-  align-items: center;
-  margin-bottom: 16rpx;
-}
-
-.task-checkbox {
-  margin-right: 16rpx;
-}
-
-.checkbox {
-  width: 36rpx;
-  height: 36rpx;
-  border: 2rpx solid #ddd;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.checkbox.checked {
-  background-color: #007AFF;
-  border-color: #007AFF;
-}
-
-.checkbox.checked::after {
-  content: '✓';
-  color: white;
-  font-size: 24rpx;
+  align-items: flex-start;
+  margin-bottom: 20rpx;
+  gap: 16rpx;
 }
 
 .task-title {
   flex: 1;
-  font-size: 34rpx;
-  font-weight: bold;
-  color: #333;
-  margin-right: 20rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1c1c1e;
+  line-height: 40rpx;
+  letter-spacing: 0.3rpx;
   display: -webkit-box;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
 .task-card.completed .task-title {
   text-decoration: line-through;
-  color: #999;
+  color: #8e8e93;
+  opacity: 0.7;
 }
 
 .priority-tag {
-  padding: 6rpx 16rpx;
-  border-radius: 16rpx;
-  font-size: 24rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 12rpx;
+  font-size: 22rpx;
   color: white;
+  font-weight: 600;
+  flex-shrink: 0;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
 }
 
 .priority-tag.high {
-  background-color: #f44336;
+  background: linear-gradient(135deg, #ff3b30, #d70015);
 }
 
 .priority-tag.medium {
-  background-color: #ff9800;
+  background: linear-gradient(135deg, #ff9500, #e6851c);
 }
 
 .priority-tag.low {
-  background-color: #4caf50;
+  background: linear-gradient(135deg, #34c759, #30d158);
 }
 
 .task-info {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 16rpx;
+  flex-direction: column;
+  gap: 8rpx;
+  margin-bottom: 20rpx;
   font-size: 26rpx;
-  color: #999;
+  color: #8e8e93;
+}
+
+.task-checkbox {
+  margin-left: 8rpx;
+  flex-shrink: 0;
+  margin-top: 8rpx;
+}
+
+.checkbox {
+  width: 40rpx;
+  height: 40rpx;
+  border: 3rpx solid #e5e5ea;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+.checkbox.checked {
+  background: linear-gradient(135deg, #34c759, #30d158);
+  border-color: #34c759;
+  box-shadow: 0 2rpx 8rpx rgba(52, 199, 89, 0.3);
+}
+
+.checkbox.checked::after {
+  content: '✓';
+  color: white;
+  font-size: 26rpx;
+  font-weight: bold;
 }
 
 .task-desc {
   font-size: 28rpx;
-  color: #666;
+  color: #636366;
   line-height: 44rpx;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  display: block;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .empty-tip {

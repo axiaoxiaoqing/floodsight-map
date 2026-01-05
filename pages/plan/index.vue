@@ -27,7 +27,7 @@
       </view>
     </view>
     <view class="content">
-      <view class="situation-card">
+      <view class="situation-card" >
         <view class="button-grid">
           <view 
             v-for="(button, index) in monitoringButtons" 
@@ -106,7 +106,7 @@ const buttonContents = ref([
 
 // 视图模式数据
 const viewModes = ref(['图文模式', '地图模式', '关怀模式'])
-const currentViewMode = ref('地图模式')
+const currentViewMode = ref('图文模式')
 const isDropdownOpen = ref(false)
 
 // 视图模式切换处理函数

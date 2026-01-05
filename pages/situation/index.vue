@@ -27,7 +27,7 @@
       </view>
     </view>
     <view class="content">
-      <view class="situation-card">
+      <view class="situation-card" v-if="currentViewMode === '图文模式'">
         <view class="button-grid">
           <view 
             v-for="(button, index) in monitoringButtons" 
@@ -50,17 +50,30 @@
         </view>
       
       </view>
-      
-
     
-      <view class="details-container">
-        <!-- 监测详情组件 - 与选择框联动 -->
-        <DetailsSection 
+      <!-- 根据视图模式显示不同页面内容 -->
+      <!-- 图文模式：保持原有的详细信息显示 -->
+      <view v-if="currentViewMode === '图文模式'" class="details-container">
+        <DetailsSection v-if="currentViewMode === '图文模式'"
           :current-button="currentButton"
           :button-contents="buttonContents"
           :monitoring-buttons="monitoringButtons"
         />
       </view>
+      
+      <!-- 地图模式：使用独立的地图组件 -->
+      <MapMode 
+        v-else-if="currentViewMode === '地图模式'" 
+        :current-button="currentButton"
+        :monitoring-buttons="monitoringButtons"
+      />
+      
+      <!-- 关怀模式：使用独立的关怀模式组件 -->
+      <CareMode 
+        v-else 
+        :current-button="currentButton"
+        :button-contents="buttonContents"
+      />
     </view>
   </view>
 </template>
@@ -70,6 +83,8 @@ import { ref, onMounted, nextTick } from 'vue'
 
 // 导入监测详情子组件
 import DetailsSection from '../situation/DetailsSection.vue'
+import MapMode from './MapMode.vue'
+import CareMode from './CareMode.vue'
 import UniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
 
 // 响应式数据
@@ -189,7 +204,7 @@ const buttonContents = ref([
 
 // 视图模式数据
 const viewModes = ref(['图文模式', '地图模式', '关怀模式'])
-const currentViewMode = ref('地图模式')
+const currentViewMode = ref('图文模式')
 const isDropdownOpen = ref(false)
 
 // 视图模式切换处理函数
