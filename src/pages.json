@@ -7,9 +7,9 @@
 			}
 		},
 		{
-			"path": "pages/plan/index",
+			"path": "pages/map/index",
 			"style": {
-				"navigationBarTitleText": "预案"
+				"navigationBarTitleText": "地图模式"
 			}
 		},
 		{
@@ -19,9 +19,9 @@
 			}
 		},
 		{
-			"path": "pages/todo/index",
+			"path": "pages/user/index",
 			"style": {
-				"navigationBarTitleText": "我的待办"
+				"navigationBarTitleText": "我的"
 			}
 		},
 		{
@@ -53,10 +53,10 @@
 				"selectedIconPath": "static/icon/situation-active.png"
 			},
 			{
-				"pagePath": "pages/plan/index",
-				"text": "预案",
-				"iconPath": "static/icon/plan.png",
-				"selectedIconPath": "static/icon/plan-active.png"
+				"pagePath": "pages/map/index",
+				"text": "地图模式",
+				"iconPath": "static/icon/map.png",
+				"selectedIconPath": "static/icon/map-active.png"
 			},
 			{
 				"pagePath": "pages/science/index",
@@ -65,8 +65,8 @@
 				"selectedIconPath": "static/icon/science-active.png"
 			},
 			{
-				"pagePath": "pages/todo/index",
-				"text": "我的待办",
+				"pagePath": "pages/user/index",
+				"text": "我的",
 				"iconPath": "static/icon/todo.png",
 				"selectedIconPath": "static/icon/todo-active.png"
 			}

@@ -6,7 +6,7 @@
 		<view class="map-container">
 			<!-- H5环境使用maplibre-gl -->
 			<!-- #ifdef H5 -->
-			<div id="map" class="map"></div>
+			<div id="map" class="map" :style="{ height: '6000rpx' }"></div>
 			<!-- #endif -->
 			
 			<!-- 微信小程序环境使用原生地图组件 -->
@@ -14,6 +14,7 @@
 			<map 
 				id="myMap" 
 				class="map"
+				:style="{ height: '6000rpx' }"
 				:latitude="latitude"
 				:longitude="longitude"
 				:scale="scale"
@@ -172,11 +173,13 @@
 		justify-content: flex-start;
 		padding: 20rpx;
 		min-height: 100vh;
+		height: auto;
+		overflow-y: auto;
 	}
 
 	.map-container {
 		width: 100%;
-		height: 2400rpx;
+		height: 6000rpx;
 		margin-bottom: 30rpx;
 		border-radius: 16rpx;
 		overflow: hidden;
@@ -186,6 +189,7 @@
 	.map {
 		width: 100%;
 		height: 100%;
+		min-height: 6000rpx;
 	}
 
 	.text-area {

@@ -7,7 +7,10 @@
     </view>
 
     <!-- 监测详情子组件 -->
-    <MonitoringContent :content-data="currentContent" />
+    <MonitoringContent 
+      :content-data="currentContent" 
+      :button-type="selectedButtonInfo.title"
+    />
     
   </view>
 </template>

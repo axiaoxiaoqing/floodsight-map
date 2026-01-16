@@ -26,6 +26,10 @@
         </view>
       </view>
     </view>
+    
+    <!-- 预警提示组件 -->
+    <WarningAlert />
+    
     <view class="content">
       <view class="situation-card" v-if="currentViewMode === '图文模式'">
         <view class="button-grid">
@@ -61,12 +65,6 @@
         />
       </view>
       
-      <!-- 地图模式：使用独立的地图组件 -->
-      <MapMode 
-        v-else-if="currentViewMode === '地图模式'" 
-        :current-button="currentButton"
-        :monitoring-buttons="monitoringButtons"
-      />
       
       <!-- 关怀模式：使用独立的关怀模式组件 -->
       <CareMode 
@@ -83,8 +81,8 @@ import { ref, onMounted, nextTick } from 'vue'
 
 // 导入监测详情子组件
 import DetailsSection from '../situation/DetailsSection.vue'
-import MapMode from './MapMode.vue'
 import CareMode from './CareMode.vue'
+import WarningAlert from './WarningAlert.vue'
 import UniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
 
 // 响应式数据
@@ -127,6 +125,23 @@ const monitoringButtons = ref([
     icon: '/static/situ-icon/安置点.svg',
     title: '安置点',
     description: '应急安置点状态和人员信息'
+  },  { 
+    text: '桥梁', 
+    icon: '/static/plan-icon/桥梁.svg',
+    title: '桥梁监测',
+    description: '桥梁结构安全监测，包括桥墩、桥面位移、应力监测等'
+  },
+  { 
+    text: '重点关注点', 
+    icon: '/static/plan-icon/重点关注点.svg',
+    title: '重点关注点',
+    description: '重点关注区域监测，包括关键设施、地质隐患点等'
+  },
+  { 
+    text: '隐患点', 
+    icon: '/static/plan-icon/隐患点.svg',
+    title: '隐患点排查',
+    description: '安全隐患排查与监测，及时发现和预警潜在风险'
   }
 ])
 
@@ -182,11 +197,6 @@ const buttonContents = ref([
     title: '视频监控详情',
     description: '重点区域视频监控画面',
     status: 'normal',
-    realTimeData: [
-      { label: '在线摄像头', value: '12', unit: '个', status: 'normal' },
-      { label: '离线摄像头', value: '1', unit: '个', status: 'warning' },
-      { label: '覆盖率', value: '92', unit: '%', status: 'normal' }
-    ],
     hasChart: false
   },
   {
@@ -203,7 +213,7 @@ const buttonContents = ref([
 ])
 
 // 视图模式数据
-const viewModes = ref(['图文模式', '地图模式', '关怀模式'])
+const viewModes = ref(['图文模式',  '关怀模式'])
 const currentViewMode = ref('图文模式')
 const isDropdownOpen = ref(false)
 
@@ -228,7 +238,10 @@ function showLocationTip() {
 
 // 选择监测按钮
 function selectButton(index) {
-  currentButton.value = index
+  // 确保选择的按钮有对应的内容数据
+  if (index >= 0 && index < buttonContents.value.length) {
+    currentButton.value = index
+  }
 }
 
 // 判断是否为SVG图标
@@ -260,7 +273,6 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
 }
-
 .header-left {
   flex: 2;
   background-color: rgba(255, 255, 255, 0.9);

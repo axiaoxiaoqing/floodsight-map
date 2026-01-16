@@ -1,18 +1,21 @@
 <template>
   <view class="care-mode-container">
     <view class="care-card">
-      <view class="care-header">
+      <view v-if="buttonContents[currentButton]" class="care-header">
         <text class="care-title">{{ buttonContents[currentButton].title }}</text>
         <view class="care-status" :class="buttonContents[currentButton].status">
           <text class="status-text">{{ getStatusText(buttonContents[currentButton].status) }}</text>
         </view>
       </view>
+      <view v-else class="care-header">
+        <text class="care-title">数据加载中...</text>
+      </view>
       
-      <view class="care-description">
+      <view v-if="buttonContents[currentButton]" class="care-description">
         <text class="description-text">{{ buttonContents[currentButton].description }}</text>
       </view>
       
-      <view class="care-data-grid">
+      <view v-if="buttonContents[currentButton]" class="care-data-grid">
         <view 
           v-for="(data, index) in buttonContents[currentButton].realTimeData" 
           :key="index"

@@ -1,11 +1,17 @@
 <template>
   <view class="map-container">
-    <view class="map-placeholder">
-      <text class="map-text">🗺️ 地图显示区域</text>
-      <text class="map-subtitle">显示{{ monitoringButtons[currentButton].text }}监测点位</text>
-    </view>
+    <!-- uni-app地图组件 -->
+    <map 
+      id="map" 
+      class="amap-container" 
+      :scale="13" 
+      :latitude="mapCenter.lat" 
+      :longitude="mapCenter.lng" 
+      :markers="markers" 
+      :show-location="true" 
+      :show-scale="true"
+    ></map>
     
-    <!-- 可以在这里集成真实的地图组件 -->
     <view class="map-features">
       <view class="feature-item" v-for="(feature, index) in mapFeatures" :key="index">
         <text class="feature-icon">{{ feature.icon }}</text>
@@ -16,7 +22,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 // 接收父组件传递的props
 const props = defineProps({
@@ -30,6 +36,15 @@ const props = defineProps({
   }
 })
 
+// 地图中心点
+const mapCenter = ref({
+  lng: 116.397428,
+  lat: 39.90923
+})
+
+// 地图标记点
+const markers = ref([])
+
 // 地图功能特性
 const mapFeatures = ref([
   { icon: '📍', text: '监测点位标记' },
@@ -37,6 +52,44 @@ const mapFeatures = ref([
   { icon: '🏞️', text: '地形地貌' },
   { icon: '🌊', text: '水系分布' }
 ])
+
+// 更新监测点位标记
+const updateMonitoringMarkers = () => {
+  // 模拟监测点位数据
+  const markersData = [
+    { id: 1, lng: 116.397428, lat: 39.90923, name: '监测点1' },
+    { id: 2, lng: 116.405285, lat: 39.904154, name: '监测点2' },
+    { id: 3, lng: 116.410000, lat: 39.910000, name: '监测点3' }
+  ]
+  
+  // 转换为uni-app地图组件需要的markers格式
+  markers.value = markersData.map((item, index) => ({
+    id: item.id,
+    latitude: item.lat,
+    longitude: item.lng,
+    title: item.name,
+    iconPath: '/static/icon/normal.png', // 使用项目中的图标
+    width: 32,
+    height: 32,
+    callout: {
+      content: item.name,
+      fontSize: 14,
+      borderRadius: 4,
+      bgColor: '#fff',
+      color: '#333',
+      padding: 8,
+      display: 'BYCLICK'
+    }
+  }))
+}
+
+// 监听监测类型变化
+watch(() => props.currentButton, () => {
+  updateMonitoringMarkers()
+})
+
+// 初始化标记
+updateMonitoringMarkers()
 </script>
 
 <style scoped>
@@ -44,31 +97,25 @@ const mapFeatures = ref([
   margin-top: 20rpx;
 }
 
-.map-placeholder {
+.amap-container {
   width: 100%;
   height: 400rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 16rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
   margin-bottom: 30rpx;
+  overflow: hidden;
 }
 
-.map-text {
-  font-size: 48rpx;
-  color: white;
-  margin-bottom: 12rpx;
-  font-weight: bold;
-}
-
-.map-subtitle {
-  font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.9);
-  text-align: center;
-  line-height: 1.4;
+/* 自定义标记样式 */
+.custom-marker {
+  padding: 8px 12px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .map-features {
